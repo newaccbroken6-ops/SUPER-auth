@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase, License, Application } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Plus, Key, Copy, Check, Search, Filter, X, Loader2,
+  Plus, Key, Copy, Check, Search, X, Loader2,
   CheckCircle2, XCircle, Clock, Ban, RefreshCw, Cpu, Trash2, AlertTriangle
 } from 'lucide-react';
 
@@ -103,7 +103,7 @@ function FormFields({
 }
 
 export default function LicensesPage() {
-  const { user, session } = useAuth();
+  const { user, session, profile } = useAuth();
   const [licenses, setLicenses] = useState<License[]>([]);
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
