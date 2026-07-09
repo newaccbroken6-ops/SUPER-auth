@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Key, AppWindow, Activity, Users,
   Settings, LogOut, ChevronLeft, ChevronRight, Zap,
-  Shield, Menu, X, Upload
+  Shield, Menu, Upload
 } from 'lucide-react';
 
 type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates';
@@ -42,8 +42,12 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={`flex items-center gap-3 px-4 py-5 border-b border-gray-800 ${collapsed ? 'justify-center' : ''}`}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/30">
-          <Key className="w-5 h-5 text-white" />
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400/10 via-blue-500/10 to-purple-600/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 border border-cyan-500/20">
+          <img 
+            src="/logo.png" 
+            alt="SUPER NOVA Logo" 
+            className="w-7 h-7 object-contain drop-shadow-lg"
+          />
         </div>
         {!collapsed && (
           <div>
@@ -158,6 +162,11 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
+            <img 
+              src="/logo.png" 
+              alt="SUPER NOVA Logo" 
+              className="w-6 h-6 object-contain drop-shadow-lg"
+            />
             <Zap className="w-4 h-4 text-cyan-400" />
             <span className="text-white font-bold text-sm">SUPER NOVA KEYS</span>
           </div>

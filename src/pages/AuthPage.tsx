@@ -53,9 +53,13 @@ export default function AuthPage() {
       <div className="relative w-full max-w-md z-10">
         {/* Logo with glow effect */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 shadow-2xl shadow-cyan-500/50 mb-6 relative group">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 blur-xl opacity-70 group-hover:opacity-100 transition-opacity" />
-            <Key className="w-10 h-10 text-white relative z-10" />
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-cyan-400/10 via-blue-500/10 to-purple-600/10 backdrop-blur-sm shadow-2xl shadow-cyan-500/50 mb-6 relative group border border-cyan-500/20">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
+            <img 
+              src="/logo.png" 
+              alt="SUPER NOVA Logo" 
+              className="w-20 h-20 object-contain relative z-10 drop-shadow-2xl"
+            />
           </div>
           <div className="flex items-center justify-center gap-3 mb-2">
             <Sparkles className="w-6 h-6 text-cyan-400 animate-pulse" />
