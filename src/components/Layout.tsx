@@ -5,6 +5,7 @@ import {
   Settings, LogOut, ChevronLeft, ChevronRight, Zap,
   Shield, Menu, Upload, Code, Database, Monitor
 } from 'lucide-react';
+import Particles from './Particles';
 
 type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor';
 
@@ -142,9 +143,14 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-950">
+    <div className="flex h-screen bg-gray-950 overflow-hidden">
+      {/* Particles global background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Particles />
+      </div>
+
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col bg-gray-900/80 backdrop-blur border-r border-gray-800 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+      <aside className={`hidden lg:flex flex-col bg-gray-900/80 backdrop-blur border-r border-gray-800 transition-all duration-300 relative z-10 ${collapsed ? 'w-16' : 'w-64'}`}>
         <SidebarContent />
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -165,9 +171,9 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
@@ -191,7 +197,7 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-y-auto scrollbar-thin relative z-10">
           {children}
         </main>
       </div>
