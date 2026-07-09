@@ -9,6 +9,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
+import Particles from '../components/Particles';
 
 interface Stats {
   totalLicenses: number;
@@ -162,9 +163,14 @@ export default function DashboardPage() {
   ] : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Particles background */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        <Particles />
+      </div>
+
       {/* Header with gradient */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/20 p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/20 p-8 z-10">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
@@ -181,7 +187,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards with enhanced design */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 animate-pulse h-36" />
@@ -224,7 +230,7 @@ export default function DashboardPage() {
             })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         {/* Area chart with enhanced styling */}
         <div className="lg:col-span-2 bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-all">
           <div className="flex items-center gap-3 mb-6">
