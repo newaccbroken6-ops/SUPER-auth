@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Key, Eye, EyeOff, Loader2, Zap, Sparkles, LogIn, UserPlus, Rocket, CheckCircle, XCircle } from 'lucide-react';
+import { Key, Eye, EyeOff, Loader2, Zap, Sparkles, LogIn, UserPlus, Rocket, CheckCircle, XCircle, Code } from 'lucide-react';
 import Particles from '../components/Particles';
 
 type Mode = 'signin' | 'signup';
@@ -197,9 +197,12 @@ export default function AuthPage() {
           SUPER-NOVA-KEYS v1.0 — Next-Gen License Management
           <Zap className="w-3 h-3 text-purple-500" />
         </p>
-        <p className="text-center text-gray-500 text-xs mt-3 font-mono">
-          DEV: <span className="text-cyan-400 font-bold">LinuxKING</span>
-        </p>
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <Code className="w-3.5 h-3.5 text-cyan-500" />
+          <p className="text-gray-500 text-xs font-mono">
+            DEV: <span className="text-cyan-400 font-bold">LinuxKING</span>
+          </p>
+        </div>
       </div>
     </div>
   );

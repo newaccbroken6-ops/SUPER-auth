@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Key, AppWindow, Activity, Users,
   Settings, LogOut, ChevronLeft, ChevronRight, Zap,
-  Shield, Menu, Upload
+  Shield, Menu, Upload, Code
 } from 'lucide-react';
 
 type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates';
@@ -118,10 +118,13 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
               )}
             </div>
             {/* Developer credit */}
-            <div className="px-3 py-2 text-center">
-              <p className="text-gray-600 text-xs font-mono">
-                DEV: <span className="text-cyan-400 font-semibold">LinuxKING</span>
-              </p>
+            <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500/5 to-purple-500/5 border border-cyan-500/10">
+              <div className="flex items-center justify-center gap-2">
+                <Code className="w-3.5 h-3.5 text-cyan-400" />
+                <p className="text-gray-600 text-xs font-mono">
+                  DEV: <span className="text-cyan-400 font-semibold">LinuxKING</span>
+                </p>
+              </div>
             </div>
           </>
         )}
@@ -180,7 +183,8 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
               <span className="text-white font-bold text-sm">SUPER NOVA KEYS</span>
             </div>
           </div>
-          <div className="text-gray-600 text-xs font-mono">
+          <div className="text-gray-600 text-xs font-mono flex items-center gap-1.5">
+            <Code className="w-3 h-3 text-cyan-400" />
             <span className="text-cyan-400 font-semibold">LinuxKING</span>
           </div>
         </header>
