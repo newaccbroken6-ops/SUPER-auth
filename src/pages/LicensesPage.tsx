@@ -3,7 +3,7 @@ import { supabase, License, Application } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Plus, Key, Copy, Check, Search, Filter, X, Loader2,
-  CheckCircle2, XCircle, Clock, Ban, RefreshCw, Cpu
+  CheckCircle2, XCircle, Clock, Ban, RefreshCw, Cpu, Trash2, AlertTriangle
 } from 'lucide-react';
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
@@ -117,6 +117,9 @@ export default function LicensesPage() {
   const [form, setForm] = useState({ app_id: '', license_type: 'monthly', note: '', custom_name: '' });
   const [bulkForm, setBulkForm] = useState({ app_id: '', license_type: 'monthly', count: 5, note: '', custom_name: '' });
   const [bulkResult, setBulkResult] = useState<License[] | null>(null);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     const [{ data: lics }, { data: appsData }] = await Promise.all([
@@ -214,6 +217,36 @@ export default function LicensesPage() {
     alert(data.message);
   }
 
+  async function deleteAllLicenses() {
+    if (deleteConfirmText !== 'DELETE ALL') {
+      setError('Please type "DELETE ALL" to confirm');
+      return;
+    }
+
+    setDeleting(true);
+    setError('');
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('licenses')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (using a condition that's always true)
+
+      if (deleteError) {
+        setError('Failed to delete licenses: ' + deleteError.message);
+      } else {
+        setShowDeleteAll(false);
+        setDeleteConfirmText('');
+        load();
+        alert(`Successfully deleted all licenses!`);
+      }
+    } catch (err) {
+      setError('An error occurred while deleting licenses');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -222,6 +255,15 @@ export default function LicensesPage() {
           <p className="text-gray-400 mt-1">{licenses.length} total licenses</p>
         </div>
         <div className="flex gap-2">
+          {profile?.role === 'admin' && licenses.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAll(true)}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-red-700 text-red-400 hover:text-red-300 hover:border-red-600 hover:bg-red-500/10 text-sm transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All
+            </button>
+          )}
           <button
             onClick={() => setShowBulk(true)}
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-700 text-gray-300 hover:text-white hover:border-gray-600 text-sm transition-colors"
@@ -433,6 +475,71 @@ export default function LicensesPage() {
               </div>
             </div>
           )}
+        </Modal>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {showDeleteAll && (
+        <Modal title="⚠️ Delete ALL Licenses" onClose={() => { setShowDeleteAll(false); setDeleteConfirmText(''); setError(''); }}>
+          <div className="space-y-4">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-400 font-semibold mb-2">DANGER ZONE</p>
+                <p className="text-gray-300 text-sm">
+                  This action will <strong className="text-red-400">permanently delete ALL {licenses.length} licenses</strong> from the database.
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  This action <strong>CANNOT be undone!</strong>
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">
+                Type <code className="text-red-400 font-bold">DELETE ALL</code> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE ALL"
+                className="w-full bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/30 transition-colors font-mono"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => { setShowDeleteAll(false); setDeleteConfirmText(''); setError(''); }} 
+                className="flex-1 py-2.5 rounded-xl border border-gray-700 text-gray-400 hover:text-white hover:border-gray-600 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={deleteAllLicenses} 
+                disabled={deleting || deleteConfirmText !== 'DELETE ALL'}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-medium text-sm hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete All Licenses
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
