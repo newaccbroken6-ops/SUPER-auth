@@ -91,31 +91,39 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       {/* User info */}
       <div className={`px-3 py-4 border-t border-gray-800 space-y-2`}>
         {!collapsed && (
-          <div className="px-3 py-2 rounded-xl bg-gray-800/50">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                {profile?.role === 'admin' ? (
-                  <Shield className="w-4 h-4 text-cyan-400" />
-                ) : (
-                  <span className="text-cyan-400 font-bold text-sm">
-                    {(profile?.username ?? profile?.email ?? 'U')[0].toUpperCase()}
-                  </span>
-                )}
+          <>
+            <div className="px-3 py-2 rounded-xl bg-gray-800/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                  {profile?.role === 'admin' ? (
+                    <Shield className="w-4 h-4 text-cyan-400" />
+                  ) : (
+                    <span className="text-cyan-400 font-bold text-sm">
+                      {(profile?.username ?? profile?.email ?? 'U')[0].toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-medium truncate">
+                    {profile?.username ?? 'User'}
+                  </p>
+                  <p className="text-gray-500 text-xs truncate">{profile?.email}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-white text-sm font-medium truncate">
-                  {profile?.username ?? 'User'}
-                </p>
-                <p className="text-gray-500 text-xs truncate">{profile?.email}</p>
-              </div>
+              {profile?.role === 'admin' && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <Shield className="w-3 h-3 text-cyan-400" />
+                  <span className="text-cyan-400 text-xs font-mono">ADMIN</span>
+                </div>
+              )}
             </div>
-            {profile?.role === 'admin' && (
-              <div className="mt-2 flex items-center gap-1.5">
-                <Shield className="w-3 h-3 text-cyan-400" />
-                <span className="text-cyan-400 text-xs font-mono">ADMIN</span>
-              </div>
-            )}
-          </div>
+            {/* Developer credit */}
+            <div className="px-3 py-2 text-center">
+              <p className="text-gray-600 text-xs font-mono">
+                DEV: <span className="text-cyan-400 font-semibold">LinuxKING</span>
+              </p>
+            </div>
+          </>
         )}
         <button
           onClick={signOut}
@@ -154,21 +162,26 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <img 
-              src="/logo.png" 
-              alt="SUPER NOVA Logo" 
-              className="w-6 h-6 object-contain drop-shadow-lg"
-            />
-            <Zap className="w-4 h-4 text-cyan-400" />
-            <span className="text-white font-bold text-sm">SUPER NOVA KEYS</span>
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <img 
+                src="/logo.png" 
+                alt="SUPER NOVA Logo" 
+                className="w-6 h-6 object-contain drop-shadow-lg"
+              />
+              <Zap className="w-4 h-4 text-cyan-400" />
+              <span className="text-white font-bold text-sm">SUPER NOVA KEYS</span>
+            </div>
+          </div>
+          <div className="text-gray-600 text-xs font-mono">
+            <span className="text-cyan-400 font-semibold">LinuxKING</span>
           </div>
         </header>
 

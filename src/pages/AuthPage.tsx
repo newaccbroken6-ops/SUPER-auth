@@ -197,6 +197,9 @@ export default function AuthPage() {
           SUPER-NOVA-KEYS v1.0 — Next-Gen License Management
           <Zap className="w-3 h-3 text-purple-500" />
         </p>
+        <p className="text-center text-gray-500 text-xs mt-3 font-mono">
+          DEV: <span className="text-cyan-400 font-bold">LinuxKING</span>
+        </p>
       </div>
     </div>
   );
