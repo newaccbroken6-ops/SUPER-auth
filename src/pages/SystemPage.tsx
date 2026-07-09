@@ -15,6 +15,10 @@ interface SystemStats {
   database: {
     totalRows: number;
     totalSize: string;
+    usedBytes: number;
+    totalBytes: number;
+    remainingBytes: number;
+    usagePercentage: number;
     tables: { name: string; rows: number; size: string }[];
   };
   performance: {
@@ -125,12 +129,22 @@ export default function SystemPage() {
         return sum + (t.rows * (avgRowSize[t.name as keyof typeof avgRowSize] ?? 0));
       }, 0);
 
+      // Supabase free tier: 500 MB
+      const totalBytesLimit = 500 * 1024 * 1024; // 500 MB in bytes
+      const usedBytes = totalSize;
+      const remainingBytes = totalBytesLimit - usedBytes;
+      const usagePercentage = (usedBytes / totalBytesLimit) * 100;
+
       setStats({
         database: {
           totalRows: (totalUsers ?? 0) + (totalLicenses ?? 0) + (totalApps ?? 0) + (totalLogs ?? 0),
           totalSize: totalSize > 1024 * 1024 
             ? `${(totalSize / (1024 * 1024)).toFixed(2)} MB`
             : `${(totalSize / 1024).toFixed(2)} KB`,
+          usedBytes,
+          totalBytes: totalBytesLimit,
+          remainingBytes,
+          usagePercentage,
           tables,
         },
         performance: {
@@ -219,14 +233,14 @@ export default function SystemPage() {
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-gray-400 text-sm font-medium mb-1">Database Size</p>
+                    <p className="text-gray-400 text-sm font-medium mb-1">Database Used</p>
                     <p className="text-4xl font-bold text-white">{stats?.database.totalSize}</p>
                   </div>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <Database className="w-6 h-6 text-white" />
                   </div>
                 </div>
-                <p className="text-gray-500 text-xs">Total stored data</p>
+                <p className="text-gray-500 text-xs">of 500 MB</p>
               </div>
             </div>
 
@@ -283,6 +297,76 @@ export default function SystemPage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Storage Usage Bar */}
+          <div className="bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                  <HardDrive className="w-5 h-5 text-cyan-400" />
+                  Storage Usage
+                </h3>
+                <p className="text-gray-500 text-sm mt-1">Supabase Free Tier - 500 MB Total</p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                  {stats?.database.usagePercentage.toFixed(1)}%
+                </p>
+                <p className="text-gray-500 text-xs">Used</p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="relative h-8 bg-gray-800/60 rounded-xl overflow-hidden border border-gray-700/50">
+              <div 
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 transition-all duration-1000 ease-out flex items-center justify-center"
+                style={{ width: `${Math.min(stats?.database.usagePercentage ?? 0, 100)}%` }}
+              >
+                {(stats?.database.usagePercentage ?? 0) > 10 && (
+                  <span className="text-white text-xs font-bold">
+                    {((stats?.database.usedBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB
+                  </span>
+                )}
+              </div>
+              {(stats?.database.usagePercentage ?? 0) <= 10 && (
+                <span className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs font-medium">
+                  {((stats?.database.usedBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB
+                </span>
+              )}
+            </div>
+
+            {/* Stats Details */}
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="text-center p-4 rounded-xl bg-gray-800/40 border border-gray-700/30">
+                <p className="text-gray-400 text-xs mb-1">Total Space</p>
+                <p className="text-2xl font-bold text-white">
+                  {((stats?.database.totalBytes ?? 0) / (1024 * 1024)).toFixed(0)} MB
+                </p>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                <p className="text-gray-400 text-xs mb-1">Used Space</p>
+                <p className="text-2xl font-bold text-cyan-400">
+                  {((stats?.database.usedBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <p className="text-gray-400 text-xs mb-1">Available</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {((stats?.database.remainingBytes ?? 0) / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+
+            {/* Warning if near limit */}
+            {(stats?.database.usagePercentage ?? 0) > 80 && (
+              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                <p className="text-amber-400 text-sm">
+                  <strong>Warning:</strong> You're using over 80% of your storage. Consider upgrading your plan or cleaning up old data.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Growth Metrics */}
