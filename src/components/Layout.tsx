@@ -3,10 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Key, AppWindow, Activity, Users,
   Settings, LogOut, ChevronLeft, ChevronRight, Zap,
-  Shield, Menu, Upload, Code
+  Shield, Menu, Upload, Code, Database
 } from 'lucide-react';
 
-type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates';
+type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system';
 
 interface NavItem {
   id: Page;
@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { id: 'licenses', label: 'Licenses', icon: Key },
   { id: 'logs', label: 'Activity Logs', icon: Activity },
   { id: 'users', label: 'Users', icon: Users, adminOnly: true },
+  { id: 'system', label: 'System Analytics', icon: Database, adminOnly: true },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

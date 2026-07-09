@@ -9,9 +9,10 @@ import LogsPage from './pages/LogsPage';
 import UsersPage from './pages/UsersPage';
 import SettingsPage from './pages/SettingsPage';
 import UpdatesPage from './pages/UpdatesPage';
+import SystemPage from './pages/SystemPage';
 import { Loader2, Zap } from 'lucide-react';
 
-type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates';
+type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system';
 
 function AppContent() {
   const { user, profile, loading } = useAuth();
@@ -44,6 +45,7 @@ function AppContent() {
       case 'logs': return <LogsPage />;
       case 'updates': return <UpdatesPage />;
       case 'users': return profile?.role === 'admin' ? <UsersPage /> : <DashboardPage />;
+      case 'system': return profile?.role === 'admin' ? <SystemPage /> : <DashboardPage />;
       case 'settings': return <SettingsPage />;
       default: return <DashboardPage />;
     }
