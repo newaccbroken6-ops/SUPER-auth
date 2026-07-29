@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 
 export default function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -13,15 +12,6 @@ export default function AnimatedBackground() {
 
     let animationId: number;
     let time = 0;
-    let imageLoaded = false;
-
-    // Load background image
-    const img = new Image();
-    img.src = '/background.png';
-    img.onload = () => {
-      imageLoaded = true;
-      imgRef.current = img;
-    };
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -30,175 +20,188 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Floating orbs configuration (Windows 11 style)
-    class FloatingOrb {
-      x: number;
-      y: number;
-      targetX: number;
-      targetY: number;
-      radius: number;
-      color: string;
-      speed: number;
+    // Noise points for organic shapes
+    const noisePoints: { x: number; y: number; vx: number; vy: number }[] = [];
+    const numPoints = 8;
+    
+    for (let i = 0; i < numPoints; i++) {
+      noisePoints.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+      });
+    }
 
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.targetX = this.x;
-        this.targetY = this.y;
-        this.radius = Math.random() * 200 + 150;
-        
-        const colors = [
-          { r: 6, g: 182, b: 212, a: 0.15 },   // cyan
-          { r: 59, g: 130, b: 246, a: 0.12 },  // blue
-          { r: 139, g: 92, b: 246, a: 0.12 },  // violet
-          { r: 168, g: 85, b: 247, a: 0.1 },   // purple
-        ];
-        const c = colors[Math.floor(Math.random() * colors.length)];
-        this.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`;
-        this.speed = 0.2 + Math.random() * 0.3;
-        
-        this.setNewTarget();
-      }
-
-      setNewTarget() {
-        this.targetX = Math.random() * canvas.width;
-        this.targetY = Math.random() * canvas.height;
-      }
-
-      update() {
-        // Smooth movement towards target
-        const dx = this.targetX - this.x;
-        const dy = this.targetY - this.y;
+    // Calculate noise value at point
+    const getNoiseValue = (x: number, y: number, t: number): number => {
+      let value = 0;
+      
+      noisePoints.forEach((point, i) => {
+        const dx = x - point.x;
+        const dy = y - point.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < 50) {
-          this.setNewTarget();
-        }
-
-        this.x += dx * this.speed * 0.01;
-        this.y += dy * this.speed * 0.01;
-      }
-
-      draw(ctx: CanvasRenderingContext2D) {
-        const gradient = ctx.createRadialGradient(
-          this.x, this.y, 0,
-          this.x, this.y, this.radius
-        );
-        gradient.addColorStop(0, this.color);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(
-          this.x - this.radius,
-          this.y - this.radius,
-          this.radius * 2,
-          this.radius * 2
-        );
-      }
-    }
-
-    // Create orbs
-    const orbs: FloatingOrb[] = [];
-    for (let i = 0; i < 6; i++) {
-      orbs.push(new FloatingOrb());
-    }
+        const influence = Math.sin(distance * 0.01 + t * 0.5 + i) * 100;
+        value += influence / (distance * 0.05 + 1);
+      });
+      
+      return value;
+    };
 
     const animate = () => {
-      time += 0.01;
+      time += 0.02;
       
-      // Clear canvas
+      // Clear with black
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      if (imageLoaded && imgRef.current) {
-        // Calculate position to center and fill screen
-        const imgAspect = imgRef.current.width / imgRef.current.height;
-        const canvasAspect = canvas.width / canvas.height;
+      // Update noise points
+      noisePoints.forEach(point => {
+        point.x += point.vx;
+        point.y += point.vy;
 
-        let drawWidth, drawHeight, drawX, drawY;
-
-        if (canvasAspect > imgAspect) {
-          drawWidth = canvas.width;
-          drawHeight = drawWidth / imgAspect;
-        } else {
-          drawHeight = canvas.height;
-          drawWidth = drawHeight * imgAspect;
-        }
-
-        drawX = (canvas.width - drawWidth) / 2;
-        drawY = (canvas.height - drawHeight) / 2;
-
-        // Draw image (static, no movement)
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.globalAlpha = 0.5; // Dim the background
-        
-        ctx.drawImage(imgRef.current, drawX, drawY, drawWidth, drawHeight);
-        ctx.globalAlpha = 1;
-
-        // Dark overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else {
-        // Loading state
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, 'rgb(3, 7, 18)');
-        gradient.addColorStop(0.5, 'rgb(15, 23, 42)');
-        gradient.addColorStop(1, 'rgb(3, 7, 18)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // Apply blur for acrylic effect
-      ctx.filter = 'blur(100px)';
-
-      // Update and draw orbs
-      orbs.forEach(orb => {
-        orb.update();
-        orb.draw(ctx);
+        // Bounce off edges
+        if (point.x < 0 || point.x > canvas.width) point.vx *= -1;
+        if (point.y < 0 || point.y > canvas.height) point.vy *= -1;
       });
 
-      ctx.filter = 'none';
+      // Draw contour lines
+      const numLevels = 30;
+      const spacing = 15;
 
-      // Add noise texture overlay (Windows 11 acrylic effect)
-      ctx.globalAlpha = 0.03;
-      for (let i = 0; i < 2000; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const brightness = Math.random() * 255;
-        ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
-        ctx.fillRect(x, y, 1, 1);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      for (let level = 0; level < numLevels; level++) {
+        const threshold = level * spacing;
+        
+        ctx.beginPath();
+        let started = false;
+
+        // Sample grid
+        const resolution = 8;
+        for (let y = 0; y < canvas.height; y += resolution) {
+          for (let x = 0; x < canvas.width; x += resolution) {
+            const value = getNoiseValue(x, y, time);
+            
+            // Check if this point crosses the threshold
+            const valueNext = getNoiseValue(x + resolution, y, time);
+            const valueDown = getNoiseValue(x, y + resolution, time);
+            
+            if ((value < threshold && valueNext >= threshold) || 
+                (value >= threshold && valueNext < threshold)) {
+              // Horizontal crossing
+              const t = (threshold - value) / (valueNext - value);
+              const px = x + t * resolution;
+              const py = y;
+              
+              if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+            
+            if ((value < threshold && valueDown >= threshold) || 
+                (value >= threshold && valueDown < threshold)) {
+              // Vertical crossing
+              const t = (threshold - value) / (valueDown - value);
+              const px = x;
+              const py = y + t * resolution;
+              
+              if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+          }
+        }
+        
+        // Vary opacity based on level
+        const opacity = 0.3 + (level % 3) * 0.15;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+        ctx.stroke();
       }
-      ctx.globalAlpha = 1;
 
-      // Add subtle animated light sweep (Windows 11 style)
-      const sweepGradient = ctx.createLinearGradient(
-        Math.cos(time * 0.3) * canvas.width,
-        Math.sin(time * 0.3) * canvas.height,
-        canvas.width + Math.cos(time * 0.3) * canvas.width,
-        canvas.height + Math.sin(time * 0.3) * canvas.height
-      );
-      sweepGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-      sweepGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)');
-      sweepGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      // Add subtle cyan accent lines
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+      ctx.lineWidth = 2;
       
-      ctx.fillStyle = sweepGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let level = 5; level < numLevels; level += 10) {
+        const threshold = level * spacing;
+        
+        ctx.beginPath();
+        let started = false;
 
-      // Vignette effect
-      const vignette = ctx.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width * 0.2,
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width * 0.7
-      );
-      vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+        const resolution = 8;
+        for (let y = 0; y < canvas.height; y += resolution) {
+          for (let x = 0; x < canvas.width; x += resolution) {
+            const value = getNoiseValue(x, y, time);
+            const valueNext = getNoiseValue(x + resolution, y, time);
+            
+            if ((value < threshold && valueNext >= threshold) || 
+                (value >= threshold && valueNext < threshold)) {
+              const t = (threshold - value) / (valueNext - value);
+              const px = x + t * resolution;
+              const py = y;
+              
+              if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+          }
+        }
+        
+        ctx.stroke();
+      }
+
+      // Add glow effect
+      ctx.shadowColor = 'rgba(6, 182, 212, 0.3)';
+      ctx.shadowBlur = 10;
       
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Draw some highlighted contours
+      for (let level = 10; level < numLevels; level += 15) {
+        const threshold = level * spacing;
+        
+        ctx.beginPath();
+        let started = false;
+
+        const resolution = 8;
+        for (let y = 0; y < canvas.height; y += resolution) {
+          for (let x = 0; x < canvas.width; x += resolution) {
+            const value = getNoiseValue(x, y, time);
+            const valueNext = getNoiseValue(x + resolution, y, time);
+            
+            if ((value < threshold && valueNext >= threshold) || 
+                (value >= threshold && valueNext < threshold)) {
+              const t = (threshold - value) / (valueNext - value);
+              const px = x + t * resolution;
+              const py = y;
+              
+              if (!started) {
+                ctx.moveTo(px, py);
+                started = true;
+              } else {
+                ctx.lineTo(px, py);
+              }
+            }
+          }
+        }
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+      
+      ctx.shadowBlur = 0;
 
       animationId = requestAnimationFrame(animate);
     };
