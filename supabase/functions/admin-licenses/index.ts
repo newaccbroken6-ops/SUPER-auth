@@ -81,10 +81,10 @@ Deno.serve(async (req: Request) => {
     if (req.method === "POST" && path === "/generate") {
       const { app_id, license_type, count = 1, note, custom_name } = await req.json();
 
-      // Verify ownership or admin
+      // Verify ownership or admin and get app name
       const { data: app } = await supabase
         .from("applications")
-        .select("id, owner_id")
+        .select("id, owner_id, name")
         .eq("id", app_id)
         .maybeSingle();
 
@@ -94,11 +94,33 @@ Deno.serve(async (req: Request) => {
         });
       }
 
+      // Sanitize app name for use in license key
+      const appNameSegment = app.name
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .substring(0, 20);
+
       const toInsert = Array.from({ length: Math.min(count, 100) }, (_, i) => {
-        let keyName = custom_name;
-        // For bulk generation with custom name, append number suffix
-        if (custom_name && count > 1) {
-          keyName = `${custom_name}-${i + 1}`;
+        let keyName: string;
+        
+        if (custom_name) {
+          // Format: {APP-NAME}-{CUSTOM-NAME}
+          const customSegment = custom_name
+            .toUpperCase()
+            .replace(/[^A-Z0-9\s-]/g, "")
+            .replace(/\s+/g, "-")
+            .substring(0, 20);
+          
+          // For bulk generation, append number suffix
+          if (count > 1) {
+            keyName = `${appNameSegment}-${customSegment}-${i + 1}`;
+          } else {
+            keyName = `${appNameSegment}-${customSegment}`;
+          }
+        } else {
+          // If no custom name, use default random format
+          keyName = undefined as any;
         }
         
         return {
