@@ -20,188 +20,152 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Noise points for organic shapes
-    const noisePoints: { x: number; y: number; vx: number; vy: number }[] = [];
-    const numPoints = 8;
-    
-    for (let i = 0; i < numPoints; i++) {
-      noisePoints.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-      });
-    }
+    // Noise texture for fabric effect
+    const createNoiseTexture = () => {
+      const noiseCanvas = document.createElement('canvas');
+      noiseCanvas.width = canvas.width;
+      noiseCanvas.height = canvas.height;
+      const noiseCtx = noiseCanvas.getContext('2d');
+      if (!noiseCtx) return noiseCanvas;
 
-    // Calculate noise value at point
-    const getNoiseValue = (x: number, y: number, t: number): number => {
-      let value = 0;
-      
-      noisePoints.forEach((point, i) => {
-        const dx = x - point.x;
-        const dy = y - point.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const influence = Math.sin(distance * 0.01 + t * 0.5 + i) * 100;
-        value += influence / (distance * 0.05 + 1);
-      });
-      
-      return value;
+      const imageData = noiseCtx.createImageData(noiseCanvas.width, noiseCanvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const noise = Math.random() * 30 + 10;
+        data[i] = noise;     // R
+        data[i + 1] = noise; // G
+        data[i + 2] = noise; // B
+        data[i + 3] = 255;   // A
+      }
+
+      noiseCtx.putImageData(imageData, 0, 0);
+      return noiseCanvas;
     };
 
+    const noiseTexture = createNoiseTexture();
+
     const animate = () => {
-      time += 0.02;
-      
-      // Clear with black
+      time += 0.005;
+
+      // Base dark background
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update noise points
-      noisePoints.forEach(point => {
-        point.x += point.vx;
-        point.y += point.vy;
+      // Draw noise texture
+      ctx.globalAlpha = 0.15;
+      ctx.drawImage(noiseTexture, 0, 0);
+      ctx.globalAlpha = 1;
 
-        // Bounce off edges
-        if (point.x < 0 || point.x > canvas.width) point.vx *= -1;
-        if (point.y < 0 || point.y > canvas.height) point.vy *= -1;
-      });
+      // Create flowing light waves (fabric folds)
+      const numWaves = 3;
 
-      // Draw contour lines
-      const numLevels = 30;
-      const spacing = 15;
+      for (let i = 0; i < numWaves; i++) {
+        const offsetY = (i * canvas.height) / numWaves + Math.sin(time + i * 2) * 100;
+        const waveHeight = canvas.height * 0.4;
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.lineWidth = 1.5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+        // Create gradient for wave (light on fabric)
+        const gradient = ctx.createRadialGradient(
+          canvas.width * 0.3 + Math.cos(time * 0.5 + i) * 200,
+          offsetY,
+          0,
+          canvas.width * 0.3 + Math.cos(time * 0.5 + i) * 200,
+          offsetY,
+          waveHeight
+        );
 
-      for (let level = 0; level < numLevels; level++) {
-        const threshold = level * spacing;
-        
-        ctx.beginPath();
-        let started = false;
+        gradient.addColorStop(0, 'rgba(80, 80, 90, 0.3)');
+        gradient.addColorStop(0.3, 'rgba(50, 50, 60, 0.2)');
+        gradient.addColorStop(0.6, 'rgba(30, 30, 40, 0.1)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        // Sample grid
-        const resolution = 8;
-        for (let y = 0; y < canvas.height; y += resolution) {
-          for (let x = 0; x < canvas.width; x += resolution) {
-            const value = getNoiseValue(x, y, time);
-            
-            // Check if this point crosses the threshold
-            const valueNext = getNoiseValue(x + resolution, y, time);
-            const valueDown = getNoiseValue(x, y + resolution, time);
-            
-            if ((value < threshold && valueNext >= threshold) || 
-                (value >= threshold && valueNext < threshold)) {
-              // Horizontal crossing
-              const t = (threshold - value) / (valueNext - value);
-              const px = x + t * resolution;
-              const py = y;
-              
-              if (!started) {
-                ctx.moveTo(px, py);
-                started = true;
-              } else {
-                ctx.lineTo(px, py);
-              }
-            }
-            
-            if ((value < threshold && valueDown >= threshold) || 
-                (value >= threshold && valueDown < threshold)) {
-              // Vertical crossing
-              const t = (threshold - value) / (valueDown - value);
-              const px = x;
-              const py = y + t * resolution;
-              
-              if (!started) {
-                ctx.moveTo(px, py);
-                started = true;
-              } else {
-                ctx.lineTo(px, py);
-              }
-            }
-          }
-        }
-        
-        // Vary opacity based on level
-        const opacity = 0.3 + (level % 3) * 0.15;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-        ctx.stroke();
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Add subtle cyan accent lines
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
-      ctx.lineWidth = 2;
+      // Add flowing curves (fabric contours)
+      ctx.save();
       
-      for (let level = 5; level < numLevels; level += 10) {
-        const threshold = level * spacing;
-        
+      for (let i = 0; i < 5; i++) {
         ctx.beginPath();
-        let started = false;
+        
+        const yOffset = (i * canvas.height) / 4 - canvas.height / 4;
+        const phase = time + i * 0.8;
 
-        const resolution = 8;
-        for (let y = 0; y < canvas.height; y += resolution) {
-          for (let x = 0; x < canvas.width; x += resolution) {
-            const value = getNoiseValue(x, y, time);
-            const valueNext = getNoiseValue(x + resolution, y, time);
-            
-            if ((value < threshold && valueNext >= threshold) || 
-                (value >= threshold && valueNext < threshold)) {
-              const t = (threshold - value) / (valueNext - value);
-              const px = x + t * resolution;
-              const py = y;
-              
-              if (!started) {
-                ctx.moveTo(px, py);
-                started = true;
-              } else {
-                ctx.lineTo(px, py);
-              }
-            }
+        for (let x = 0; x <= canvas.width; x += 10) {
+          const y = 
+            yOffset +
+            Math.sin((x * 0.003) + phase) * 150 +
+            Math.cos((x * 0.002) + phase * 1.3) * 100 +
+            canvas.height / 2;
+
+          if (x === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
           }
         }
+
+        // Create gradient along the curve
+        const curveGradient = ctx.createLinearGradient(
+          0, 
+          yOffset + canvas.height / 2 - 200, 
+          0, 
+          yOffset + canvas.height / 2 + 200
+        );
         
-        ctx.stroke();
+        curveGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        curveGradient.addColorStop(0.3, 'rgba(60, 60, 70, 0.15)');
+        curveGradient.addColorStop(0.5, 'rgba(80, 80, 90, 0.2)');
+        curveGradient.addColorStop(0.7, 'rgba(60, 60, 70, 0.15)');
+        curveGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+
+        ctx.fillStyle = curveGradient;
+        ctx.fill();
       }
 
-      // Add glow effect
-      ctx.shadowColor = 'rgba(6, 182, 212, 0.3)';
-      ctx.shadowBlur = 10;
-      
-      // Draw some highlighted contours
-      for (let level = 10; level < numLevels; level += 15) {
-        const threshold = level * spacing;
-        
-        ctx.beginPath();
-        let started = false;
+      ctx.restore();
 
-        const resolution = 8;
-        for (let y = 0; y < canvas.height; y += resolution) {
-          for (let x = 0; x < canvas.width; x += resolution) {
-            const value = getNoiseValue(x, y, time);
-            const valueNext = getNoiseValue(x + resolution, y, time);
-            
-            if ((value < threshold && valueNext >= threshold) || 
-                (value >= threshold && valueNext < threshold)) {
-              const t = (threshold - value) / (valueNext - value);
-              const px = x + t * resolution;
-              const py = y;
-              
-              if (!started) {
-                ctx.moveTo(px, py);
-                started = true;
-              } else {
-                ctx.lineTo(px, py);
-              }
-            }
-          }
-        }
-        
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
+      // Add highlight streaks (light reflecting on fabric)
+      for (let i = 0; i < 3; i++) {
+        const streakGradient = ctx.createLinearGradient(
+          canvas.width * 0.2 + Math.cos(time * 0.3 + i) * 300,
+          0,
+          canvas.width * 0.8 + Math.cos(time * 0.3 + i) * 300,
+          canvas.height
+        );
+
+        streakGradient.addColorStop(0, 'rgba(120, 120, 130, 0)');
+        streakGradient.addColorStop(0.4, 'rgba(100, 100, 110, 0.08)');
+        streakGradient.addColorStop(0.6, 'rgba(100, 100, 110, 0.08)');
+        streakGradient.addColorStop(1, 'rgba(120, 120, 130, 0)');
+
+        ctx.fillStyle = streakGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-      
-      ctx.shadowBlur = 0;
+
+      // Add vignette
+      const vignette = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width * 0.1,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width * 0.8
+      );
+      vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add subtle cyan tint
+      ctx.fillStyle = 'rgba(6, 182, 212, 0.02)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       animationId = requestAnimationFrame(animate);
     };
