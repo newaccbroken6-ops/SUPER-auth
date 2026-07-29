@@ -5,7 +5,7 @@ import {
   Settings, LogOut, ChevronLeft, ChevronRight, Zap,
   Shield, Menu, Upload, Code, Database, Monitor
 } from 'lucide-react';
-import Particles from './Particles';
+import AnimatedBackground from './AnimatedBackground';
 
 type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor';
 
@@ -144,9 +144,9 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-950 overflow-hidden">
-      {/* Particles global background */}
+      {/* Animated gradient background */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Particles />
+        <AnimatedBackground />
       </div>
 
       {/* Desktop sidebar */}
