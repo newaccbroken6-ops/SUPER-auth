@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 export default function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -11,6 +12,16 @@ export default function AnimatedBackground() {
     if (!ctx) return;
 
     let animationId: number;
+    let time = 0;
+    let imageLoaded = false;
+
+    // Load background image
+    const img = new Image();
+    img.src = '/background.png';
+    img.onload = () => {
+      imageLoaded = true;
+      imgRef.current = img;
+    };
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -19,134 +30,93 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Matrix rain characters
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?/~`¥£€¢';
-    const matrix = chars.split('');
-
-    const fontSize = 14;
-    const columns = Math.floor(canvas.width / fontSize);
-    const drops: number[] = [];
-
-    // Initialize drops
-    for (let i = 0; i < columns; i++) {
-      drops[i] = Math.random() * -100;
-    }
-
-    // Glitch effect variables
-    let glitchTime = 0;
-    let nextGlitch = Math.random() * 200 + 100;
-
-    // Binary rain in background
-    const binaryColumns = Math.floor(columns / 3);
-    const binaryDrops: number[] = [];
-    for (let i = 0; i < binaryColumns; i++) {
-      binaryDrops[i] = Math.random() * -50;
-    }
-
     const animate = () => {
-      // Semi-transparent black for trail effect
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      time += 0.01;
+      
+      // Clear canvas
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Add scanline effect
-      ctx.fillStyle = 'rgba(0, 255, 0, 0.02)';
-      ctx.fillRect(0, (Date.now() / 10) % canvas.height, canvas.width, 2);
+      if (imageLoaded && imgRef.current) {
+        // Calculate movement (slow pan)
+        const moveX = Math.sin(time * 0.3) * 100;
+        const moveY = Math.cos(time * 0.2) * 80;
 
-      // Draw binary background
-      ctx.fillStyle = 'rgba(0, 255, 100, 0.15)';
-      ctx.font = `${fontSize - 4}px monospace`;
-      for (let i = 0; i < binaryColumns; i++) {
-        const binary = Math.random() > 0.5 ? '1' : '0';
-        const x = i * fontSize * 3;
-        const y = binaryDrops[i] * fontSize;
-        ctx.fillText(binary, x, y);
+        // Calculate scale (subtle zoom in/out)
+        const scale = 1 + Math.sin(time * 0.15) * 0.1;
 
-        if (y > canvas.height && Math.random() > 0.98) {
-          binaryDrops[i] = 0;
+        // Calculate position to center and fill screen
+        const imgAspect = imgRef.current.width / imgRef.current.height;
+        const canvasAspect = canvas.width / canvas.height;
+
+        let drawWidth, drawHeight, drawX, drawY;
+
+        if (canvasAspect > imgAspect) {
+          // Canvas is wider than image
+          drawWidth = canvas.width * scale;
+          drawHeight = drawWidth / imgAspect;
+        } else {
+          // Canvas is taller than image
+          drawHeight = canvas.height * scale;
+          drawWidth = drawHeight * imgAspect;
         }
-        binaryDrops[i]++;
-      }
 
-      // Glitch effect
-      glitchTime++;
-      if (glitchTime > nextGlitch) {
-        const glitchHeight = 3;
-        const glitchY = Math.random() * canvas.height;
+        drawX = (canvas.width - drawWidth) / 2 + moveX;
+        drawY = (canvas.height - drawHeight) / 2 + moveY;
+
+        // Draw image with smooth scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         
-        // RGB split glitch
-        const imageData = ctx.getImageData(0, glitchY, canvas.width, glitchHeight);
-        ctx.putImageData(imageData, Math.random() * 10 - 5, glitchY);
+        // Apply slight rotation
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.sin(time * 0.1) * 0.02); // Subtle rotation
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
         
-        glitchTime = 0;
-        nextGlitch = Math.random() * 200 + 100;
-      }
+        ctx.drawImage(imgRef.current, drawX, drawY, drawWidth, drawHeight);
+        ctx.restore();
 
-      // Draw main matrix rain
-      ctx.font = `bold ${fontSize}px monospace`;
-      
-      for (let i = 0; i < drops.length; i++) {
-        // Random character
-        const text = matrix[Math.floor(Math.random() * matrix.length)];
-        const x = i * fontSize;
-        const y = drops[i] * fontSize;
-
-        // Create gradient for each character (bright green to dark)
-        const gradient = ctx.createLinearGradient(x, y - fontSize * 10, x, y);
-        gradient.addColorStop(0, 'rgba(0, 255, 0, 0)');
-        gradient.addColorStop(0.7, 'rgba(0, 255, 0, 0.8)');
-        gradient.addColorStop(0.85, 'rgba(0, 255, 100, 1)');
-        gradient.addColorStop(1, 'rgba(200, 255, 200, 1)'); // Bright head
+        // Add animated overlay gradient
+        const gradient = ctx.createRadialGradient(
+          canvas.width / 2 + Math.cos(time * 0.5) * 200,
+          canvas.height / 2 + Math.sin(time * 0.5) * 200,
+          0,
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.8
+        );
+        gradient.addColorStop(0, 'rgba(6, 182, 212, 0.1)');
+        gradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.05)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
         
         ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw shadow for glow effect
-        ctx.shadowColor = '#00ff00';
-        ctx.shadowBlur = 8;
-        ctx.fillText(text, x, y);
-        ctx.shadowBlur = 0;
-
-        // Add extra bright leading character
-        if (Math.random() > 0.98) {
-          ctx.fillStyle = '#ffffff';
-          ctx.shadowBlur = 15;
-          ctx.fillText(text, x, y);
-          ctx.shadowBlur = 0;
-        }
-
-        // Reset drop to top randomly
-        if (y > canvas.height && Math.random() > 0.95) {
-          drops[i] = 0;
-        }
-
-        drops[i]++;
+        // Add pulsating vignette
+        const vignette = ctx.createRadialGradient(
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.2,
+          canvas.width / 2,
+          canvas.height / 2,
+          canvas.width * 0.8
+        );
+        const vignetteOpacity = 0.3 + Math.sin(time * 0.8) * 0.1;
+        vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignette.addColorStop(1, `rgba(0, 0, 0, ${vignetteOpacity})`);
+        
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        // Loading state - show gradient
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, 'rgb(3, 7, 18)');
+        gradient.addColorStop(0.5, 'rgb(15, 23, 42)');
+        gradient.addColorStop(1, 'rgb(3, 7, 18)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-
-      // Add random highlights
-      if (Math.random() > 0.97) {
-        const highlightX = Math.random() * canvas.width;
-        const highlightY = Math.random() * canvas.height;
-        ctx.fillStyle = 'rgba(0, 255, 100, 0.3)';
-        ctx.fillRect(highlightX, highlightY, 2, 2);
-      }
-
-      // Add hacker text overlay (subtle)
-      ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
-      ctx.font = 'bold 12px monospace';
-      const hackerText = '> SUPER_NOVA_AUTH_SYSTEM';
-      ctx.fillText(hackerText, 20, 30);
-
-      // Add corner code snippets
-      ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
-      ctx.font = '10px monospace';
-      const codeSnippets = [
-        '$ auth --validate',
-        '> License: OK',
-        'HWID: LOCKED',
-        'Status: ACTIVE'
-      ];
-      codeSnippets.forEach((line, i) => {
-        ctx.fillText(line, canvas.width - 150, 20 + i * 15);
-      });
 
       animationId = requestAnimationFrame(animate);
     };
