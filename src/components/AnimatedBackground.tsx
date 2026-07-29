@@ -30,96 +30,87 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Wave configuration
-    class Wave {
-      amplitude: number;
-      frequency: number;
+    // Floating orbs configuration (Windows 11 style)
+    class FloatingOrb {
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+      radius: number;
+      color: string;
       speed: number;
-      yOffset: number;
-      colors: string[];
-      blur: number;
 
-      constructor(amplitude: number, frequency: number, speed: number, yOffset: number, colors: string[], blur: number) {
-        this.amplitude = amplitude;
-        this.frequency = frequency;
-        this.speed = speed;
-        this.yOffset = yOffset;
-        this.colors = colors;
-        this.blur = blur;
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.radius = Math.random() * 200 + 150;
+        
+        const colors = [
+          { r: 6, g: 182, b: 212, a: 0.15 },   // cyan
+          { r: 59, g: 130, b: 246, a: 0.12 },  // blue
+          { r: 139, g: 92, b: 246, a: 0.12 },  // violet
+          { r: 168, g: 85, b: 247, a: 0.1 },   // purple
+        ];
+        const c = colors[Math.floor(Math.random() * colors.length)];
+        this.color = `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`;
+        this.speed = 0.2 + Math.random() * 0.3;
+        
+        this.setNewTarget();
       }
 
-      draw(ctx: CanvasRenderingContext2D, time: number) {
-        ctx.save();
-        ctx.filter = `blur(${this.blur}px)`;
-        
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        this.colors.forEach((color, i) => {
-          gradient.addColorStop(i / (this.colors.length - 1), color);
-        });
+      setNewTarget() {
+        this.targetX = Math.random() * canvas.width;
+        this.targetY = Math.random() * canvas.height;
+      }
 
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height);
+      update() {
+        // Smooth movement towards target
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Create wave path
-        for (let x = 0; x <= canvas.width; x += 5) {
-          const y = 
-            canvas.height / 2 + 
-            this.yOffset +
-            Math.sin((x * this.frequency + time * this.speed) * 0.01) * this.amplitude +
-            Math.cos((x * this.frequency * 0.7 + time * this.speed * 0.8) * 0.008) * (this.amplitude * 0.6);
-          
-          ctx.lineTo(x, y);
+        if (distance < 50) {
+          this.setNewTarget();
         }
 
-        ctx.lineTo(canvas.width, canvas.height);
-        ctx.closePath();
+        this.x += dx * this.speed * 0.01;
+        this.y += dy * this.speed * 0.01;
+      }
+
+      draw(ctx: CanvasRenderingContext2D) {
+        const gradient = ctx.createRadialGradient(
+          this.x, this.y, 0,
+          this.x, this.y, this.radius
+        );
+        gradient.addColorStop(0, this.color);
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = gradient;
-        ctx.fill();
-
-        ctx.restore();
+        ctx.fillRect(
+          this.x - this.radius,
+          this.y - this.radius,
+          this.radius * 2,
+          this.radius * 2
+        );
       }
     }
 
-    // Create multiple wave layers
-    const waves = [
-      new Wave(
-        120, 0.4, 1.5, 200,
-        ['rgba(6, 182, 212, 0.3)', 'rgba(14, 165, 233, 0.2)', 'rgba(6, 182, 212, 0.3)'],
-        40
-      ),
-      new Wave(
-        100, 0.5, -1.2, 100,
-        ['rgba(59, 130, 246, 0.25)', 'rgba(37, 99, 235, 0.15)', 'rgba(59, 130, 246, 0.25)'],
-        35
-      ),
-      new Wave(
-        140, 0.35, 1.8, 0,
-        ['rgba(139, 92, 246, 0.2)', 'rgba(124, 58, 237, 0.15)', 'rgba(139, 92, 246, 0.2)'],
-        45
-      ),
-      new Wave(
-        90, 0.6, -2, -100,
-        ['rgba(6, 182, 212, 0.15)', 'rgba(8, 145, 178, 0.1)', 'rgba(6, 182, 212, 0.15)'],
-        30
-      ),
-    ];
+    // Create orbs
+    const orbs: FloatingOrb[] = [];
+    for (let i = 0; i < 6; i++) {
+      orbs.push(new FloatingOrb());
+    }
 
     const animate = () => {
-      time += 1;
+      time += 0.01;
       
       // Clear canvas
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       if (imageLoaded && imgRef.current) {
-        // Calculate movement (slow pan)
-        const moveX = Math.sin(time * 0.003) * 50;
-        const moveY = Math.cos(time * 0.002) * 40;
-
-        // Calculate scale (subtle zoom in/out)
-        const scale = 1 + Math.sin(time * 0.0015) * 0.05;
-
         // Calculate position to center and fill screen
         const imgAspect = imgRef.current.width / imgRef.current.height;
         const canvasAspect = canvas.width / canvas.height;
@@ -127,26 +118,26 @@ export default function AnimatedBackground() {
         let drawWidth, drawHeight, drawX, drawY;
 
         if (canvasAspect > imgAspect) {
-          drawWidth = canvas.width * scale;
+          drawWidth = canvas.width;
           drawHeight = drawWidth / imgAspect;
         } else {
-          drawHeight = canvas.height * scale;
+          drawHeight = canvas.height;
           drawWidth = drawHeight * imgAspect;
         }
 
-        drawX = (canvas.width - drawWidth) / 2 + moveX;
-        drawY = (canvas.height - drawHeight) / 2 + moveY;
+        drawX = (canvas.width - drawWidth) / 2;
+        drawY = (canvas.height - drawHeight) / 2;
 
-        // Draw image with smooth scaling and dimming
+        // Draw image (static, no movement)
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.globalAlpha = 0.6; // Dim the background image
+        ctx.globalAlpha = 0.5; // Dim the background
         
         ctx.drawImage(imgRef.current, drawX, drawY, drawWidth, drawHeight);
         ctx.globalAlpha = 1;
 
-        // Add dark overlay
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        // Dark overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       } else {
         // Loading state
@@ -158,37 +149,55 @@ export default function AnimatedBackground() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Draw waves
-      waves.forEach(wave => {
-        wave.draw(ctx, time);
+      // Apply blur for acrylic effect
+      ctx.filter = 'blur(100px)';
+
+      // Update and draw orbs
+      orbs.forEach(orb => {
+        orb.update();
+        orb.draw(ctx);
       });
 
-      // Add animated particles/dots
-      ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
-      for (let i = 0; i < 30; i++) {
-        const x = (Math.sin(time * 0.01 + i) * canvas.width / 2) + canvas.width / 2;
-        const y = (Math.cos(time * 0.008 + i * 0.5) * canvas.height / 2) + canvas.height / 2;
-        const size = Math.sin(time * 0.05 + i) * 2 + 2;
-        
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.filter = 'none';
 
-      // Add glow effect at center
-      const centerGlow = ctx.createRadialGradient(
-        canvas.width / 2,
-        canvas.height / 2,
-        0,
-        canvas.width / 2,
-        canvas.height / 2,
-        canvas.width * 0.5
+      // Add noise texture overlay (Windows 11 acrylic effect)
+      ctx.globalAlpha = 0.03;
+      for (let i = 0; i < 2000; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const brightness = Math.random() * 255;
+        ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+        ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // Add subtle animated light sweep (Windows 11 style)
+      const sweepGradient = ctx.createLinearGradient(
+        Math.cos(time * 0.3) * canvas.width,
+        Math.sin(time * 0.3) * canvas.height,
+        canvas.width + Math.cos(time * 0.3) * canvas.width,
+        canvas.height + Math.sin(time * 0.3) * canvas.height
       );
-      centerGlow.addColorStop(0, 'rgba(6, 182, 212, 0.08)');
-      centerGlow.addColorStop(0.5, 'rgba(59, 130, 246, 0.04)');
-      centerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      sweepGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      sweepGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)');
+      sweepGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
       
-      ctx.fillStyle = centerGlow;
+      ctx.fillStyle = sweepGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Vignette effect
+      const vignette = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width * 0.2,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width * 0.7
+      );
+      vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+      
+      ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       animationId = requestAnimationFrame(animate);
