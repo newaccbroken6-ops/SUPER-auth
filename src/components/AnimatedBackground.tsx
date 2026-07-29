@@ -20,95 +20,88 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Gradient blob class
-    class Blob {
-      x: number;
-      y: number;
-      radius: number;
-      speedX: number;
-      speedY: number;
+    // Wave class
+    class Wave {
+      amplitude: number;
+      frequency: number;
+      speed: number;
+      yOffset: number;
       color: string;
+      thickness: number;
 
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.radius = Math.random() * 300 + 200;
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = (Math.random() - 0.5) * 0.5;
+      constructor(amplitude: number, frequency: number, speed: number, yOffset: number, color: string, thickness: number) {
+        this.amplitude = amplitude;
+        this.frequency = frequency;
+        this.speed = speed;
+        this.yOffset = yOffset;
+        this.color = color;
+        this.thickness = thickness;
+      }
+
+      draw(ctx: CanvasRenderingContext2D, time: number) {
+        ctx.beginPath();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.thickness;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const points: { x: number; y: number }[] = [];
         
-        const colors = [
-          'rgba(6, 182, 212, 0.15)',    // cyan-500
-          'rgba(59, 130, 246, 0.15)',   // blue-500
-          'rgba(139, 92, 246, 0.15)',   // violet-500
-          'rgba(168, 85, 247, 0.12)',   // purple-500
-          'rgba(14, 165, 233, 0.12)',   // sky-500
-        ];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-      }
+        for (let x = 0; x <= canvas.width; x += 5) {
+          const y = 
+            canvas.height / 2 + 
+            this.yOffset +
+            Math.sin((x * this.frequency + time * this.speed) * 0.01) * this.amplitude +
+            Math.cos((x * this.frequency * 0.5 + time * this.speed * 1.2) * 0.01) * (this.amplitude * 0.5);
+          
+          points.push({ x, y });
+        }
 
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
+        // Draw smooth curve through points
+        ctx.moveTo(points[0].x, points[0].y);
+        
+        for (let i = 1; i < points.length - 2; i++) {
+          const xc = (points[i].x + points[i + 1].x) / 2;
+          const yc = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+        }
 
-        if (this.x < -this.radius) this.x = canvas.width + this.radius;
-        if (this.x > canvas.width + this.radius) this.x = -this.radius;
-        if (this.y < -this.radius) this.y = canvas.height + this.radius;
-        if (this.y > canvas.height + this.radius) this.y = -this.radius;
-      }
-
-      draw(ctx: CanvasRenderingContext2D) {
-        const gradient = ctx.createRadialGradient(
-          this.x, this.y, 0,
-          this.x, this.y, this.radius
+        // Last segment
+        const lastIdx = points.length - 1;
+        ctx.quadraticCurveTo(
+          points[lastIdx - 1].x, 
+          points[lastIdx - 1].y, 
+          points[lastIdx].x, 
+          points[lastIdx].y
         );
-        gradient.addColorStop(0, this.color);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.stroke();
       }
     }
 
-    // Create blobs
-    const blobs: Blob[] = [];
-    for (let i = 0; i < 5; i++) {
-      blobs.push(new Blob());
-    }
+    // Create waves with different properties
+    const waves = [
+      new Wave(80, 0.5, 2, -150, 'rgba(255, 255, 255, 0.9)', 35),      // White thick
+      new Wave(60, 0.7, -1.5, -50, 'rgba(200, 200, 200, 0.7)', 30),    // Light gray
+      new Wave(100, 0.4, 1.8, 50, 'rgba(120, 120, 120, 0.5)', 40),     // Medium gray
+      new Wave(70, 0.6, -2.2, 150, 'rgba(255, 255, 255, 0.3)', 25),    // White thin
+      new Wave(90, 0.55, 1.3, -100, 'rgba(160, 160, 160, 0.4)', 28),   // Gray
+      new Wave(85, 0.45, -1.7, 100, 'rgba(80, 80, 80, 0.6)', 32),      // Dark gray
+      new Wave(75, 0.65, 2.5, 0, 'rgba(255, 255, 255, 0.15)', 20),     // White subtle
+    ];
 
     // Animation loop
     const animate = () => {
-      time += 0.01;
+      time += 1;
       
-      // Clear with dark background
-      ctx.fillStyle = 'rgb(3, 7, 18)'; // gray-950
+      // Clear with black background
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Apply blur for smooth effect
-      ctx.filter = 'blur(80px)';
-
-      // Update and draw blobs
-      blobs.forEach(blob => {
-        blob.update();
-        blob.draw(ctx);
+      // Draw all waves
+      waves.forEach(wave => {
+        wave.draw(ctx, time);
       });
-
-      ctx.filter = 'none';
-
-      // Add subtle wave overlay
-      ctx.globalCompositeOperation = 'screen';
-      const waveGradient = ctx.createLinearGradient(
-        0, 
-        Math.sin(time) * 100, 
-        canvas.width, 
-        canvas.height + Math.cos(time * 0.8) * 100
-      );
-      waveGradient.addColorStop(0, 'rgba(6, 182, 212, 0.03)');
-      waveGradient.addColorStop(0.5, 'rgba(59, 130, 246, 0.02)');
-      waveGradient.addColorStop(1, 'rgba(139, 92, 246, 0.03)');
-      ctx.fillStyle = waveGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.globalCompositeOperation = 'source-over';
 
       animationId = requestAnimationFrame(animate);
     };
@@ -125,9 +118,7 @@ export default function AnimatedBackground() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full"
-      style={{ 
-        background: 'linear-gradient(135deg, rgb(3, 7, 18) 0%, rgb(15, 23, 42) 50%, rgb(3, 7, 18) 100%)'
-      }}
+      style={{ background: '#000000' }}
     />
   );
 }
