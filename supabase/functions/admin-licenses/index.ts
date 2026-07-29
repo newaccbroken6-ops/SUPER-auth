@@ -10,23 +10,22 @@ const corsHeaders = {
 function generateLicenseKey(customName?: string): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   
-  // If custom name is provided, use it; otherwise generate a random segment
-  let nameSegment: string;
+  // If custom name is provided, use it exactly as specified (after sanitization)
   if (customName) {
-    // Sanitize the custom name: uppercase, alphanumeric only, replace spaces with hyphens
-    nameSegment = customName
+    // Sanitize: uppercase, alphanumeric + hyphens only, replace spaces with hyphens
+    return customName
       .toUpperCase()
       .replace(/[^A-Z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
-      .substring(0, 20); // Limit length
-  } else {
-    // Generate random 8-character segment
-    nameSegment = Array.from({ length: 8 }, () => 
-      chars[Math.floor(Math.random() * chars.length)]
-    ).join("");
+      .substring(0, 50); // Limit length to 50 characters
   }
   
-  return `SUPER-NOVA-${nameSegment}`;
+  // Default format if no custom name: SUPER-NOVA-{RANDOM}
+  const randomSegment = Array.from({ length: 8 }, () => 
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join("");
+  
+  return `SUPER-NOVA-${randomSegment}`;
 }
 
 function expiresAt(type: string): string | null {
@@ -95,14 +94,22 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const toInsert = Array.from({ length: Math.min(count, 100) }, (_, i) => ({
-        app_id,
-        license_key: generateLicenseKey(custom_name ? `${custom_name}${count > 1 ? `-${i + 1}` : ""}` : undefined),
-        license_type,
-        expires_at: expiresAt(license_type),
-        note: note ?? null,
-        status: "active",
-      }));
+      const toInsert = Array.from({ length: Math.min(count, 100) }, (_, i) => {
+        let keyName = custom_name;
+        // For bulk generation with custom name, append number suffix
+        if (custom_name && count > 1) {
+          keyName = `${custom_name}-${i + 1}`;
+        }
+        
+        return {
+          app_id,
+          license_key: generateLicenseKey(keyName),
+          license_type,
+          expires_at: expiresAt(license_type),
+          note: note ?? null,
+          status: "active",
+        };
+      });
 
       const { data: created, error } = await supabase
         .from("licenses")

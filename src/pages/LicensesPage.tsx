@@ -78,15 +78,17 @@ function FormFields({
         </div>
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-1.5">Custom Name (optional)</label>
+        <label className="block text-sm text-gray-400 mb-1.5">Custom License Key (optional)</label>
         <input
           type="text"
           value={f.custom_name}
           onChange={e => setF({ ...f, custom_name: e.target.value })}
-          placeholder="e.g., JOHN-DOE or PREMIUM-USER"
+          placeholder="e.g., MYCOMPANY-2024-PREMIUM or JOHN-DOE"
           className="w-full bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
         />
-        <p className="text-xs text-gray-500 mt-1">Format: SUPER-NOVA-{'{CUSTOM-NAME}'}</p>
+        <p className="text-xs text-gray-500 mt-1">
+          Leave empty for default format (SUPER-NOVA-XXXXXXXX)
+        </p>
       </div>
       <div>
         <label className="block text-sm text-gray-400 mb-1.5">Note (optional)</label>
