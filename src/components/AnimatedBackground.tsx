@@ -11,7 +11,6 @@ export default function AnimatedBackground() {
     if (!ctx) return;
 
     let animationId: number;
-    let time = 0;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -20,136 +19,134 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Pattern configuration
-    const patternSpacing = 150;
-    const patternOffsetX = 75;
-    const patternOffsetY = 75;
+    // Matrix rain characters
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+-=[]{}|;:,.<>?/~`¥£€¢';
+    const matrix = chars.split('');
 
-    // Draw LV-style monogram pattern
-    const drawMonogram = (x: number, y: number, scale: number, opacity: number, rotation: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rotation);
-      ctx.globalAlpha = opacity;
+    const fontSize = 14;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops: number[] = [];
 
-      // Draw "SN" letters (Super Nova) in LV style
-      ctx.strokeStyle = '#06b6d4'; // cyan
-      ctx.lineWidth = 2.5 * scale;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    // Initialize drops
+    for (let i = 0; i < columns; i++) {
+      drops[i] = Math.random() * -100;
+    }
 
-      // Letter "S"
-      ctx.beginPath();
-      ctx.arc(-15 * scale, -5 * scale, 12 * scale, Math.PI * 0.7, Math.PI * 2.3, false);
-      ctx.arc(-15 * scale, 5 * scale, 12 * scale, Math.PI * 0.3, Math.PI * 1.7, true);
-      ctx.stroke();
+    // Glitch effect variables
+    let glitchTime = 0;
+    let nextGlitch = Math.random() * 200 + 100;
 
-      // Letter "N"
-      ctx.beginPath();
-      ctx.moveTo(5 * scale, -15 * scale);
-      ctx.lineTo(5 * scale, 15 * scale);
-      ctx.moveTo(5 * scale, -15 * scale);
-      ctx.lineTo(20 * scale, 15 * scale);
-      ctx.moveTo(20 * scale, -15 * scale);
-      ctx.lineTo(20 * scale, 15 * scale);
-      ctx.stroke();
+    // Binary rain in background
+    const binaryColumns = Math.floor(columns / 3);
+    const binaryDrops: number[] = [];
+    for (let i = 0; i < binaryColumns; i++) {
+      binaryDrops[i] = Math.random() * -50;
+    }
 
-      // Decorative circle around (like LV flower)
-      ctx.strokeStyle = '#3b82f6'; // blue
-      ctx.lineWidth = 2 * scale;
-      ctx.beginPath();
-      ctx.arc(0, 0, 30 * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Small decorative stars
-      const drawStar = (sx: number, sy: number, size: number) => {
-        ctx.fillStyle = '#8b5cf6'; // purple
-        ctx.beginPath();
-        for (let i = 0; i < 4; i++) {
-          const angle = (Math.PI / 2) * i;
-          const x1 = sx + Math.cos(angle) * size;
-          const y1 = sy + Math.sin(angle) * size;
-          ctx.lineTo(x1, y1);
-          const angle2 = (Math.PI / 2) * i + Math.PI / 4;
-          const x2 = sx + Math.cos(angle2) * size * 0.4;
-          const y2 = sy + Math.sin(angle2) * size * 0.4;
-          ctx.lineTo(x2, y2);
-        }
-        ctx.closePath();
-        ctx.fill();
-      };
-
-      drawStar(-35 * scale, -35 * scale, 5 * scale);
-      drawStar(35 * scale, -35 * scale, 5 * scale);
-      drawStar(-35 * scale, 35 * scale, 5 * scale);
-      drawStar(35 * scale, 35 * scale, 5 * scale);
-
-      ctx.restore();
-    };
-
-    // Animation loop
     const animate = () => {
-      time += 0.02;
-      
-      // Clear with dark background
-      ctx.fillStyle = '#000000';
+      // Semi-transparent black for trail effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Add subtle gradient overlay
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, 'rgba(3, 7, 18, 0.8)');
-      gradient.addColorStop(0.5, 'rgba(15, 23, 42, 0.6)');
-      gradient.addColorStop(1, 'rgba(3, 7, 18, 0.8)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Add scanline effect
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.02)';
+      ctx.fillRect(0, (Date.now() / 10) % canvas.height, canvas.width, 2);
 
-      // Calculate number of rows and columns
-      const cols = Math.ceil(canvas.width / patternSpacing) + 2;
-      const rows = Math.ceil(canvas.height / patternSpacing) + 2;
+      // Draw binary background
+      ctx.fillStyle = 'rgba(0, 255, 100, 0.15)';
+      ctx.font = `${fontSize - 4}px monospace`;
+      for (let i = 0; i < binaryColumns; i++) {
+        const binary = Math.random() > 0.5 ? '1' : '0';
+        const x = i * fontSize * 3;
+        const y = binaryDrops[i] * fontSize;
+        ctx.fillText(binary, x, y);
 
-      // Draw repeating pattern
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          // Offset alternating rows (diamond pattern like LV)
-          const offsetX = (row % 2) * patternOffsetX;
-          const x = col * patternSpacing + offsetX - patternSpacing;
-          const y = row * patternSpacing - patternSpacing;
-
-          // Animate opacity based on distance from a moving point
-          const centerX = canvas.width / 2 + Math.cos(time * 0.5) * canvas.width * 0.3;
-          const centerY = canvas.height / 2 + Math.sin(time * 0.7) * canvas.height * 0.3;
-          const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-          const maxDistance = Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2;
-          const normalizedDistance = distance / maxDistance;
-
-          // Pulsating opacity
-          const baseOpacity = 0.15 + Math.sin(time * 2 + normalizedDistance * 5) * 0.1;
-          const opacity = Math.max(0.05, Math.min(0.3, baseOpacity));
-
-          // Gentle rotation animation
-          const rotation = Math.sin(time + col * 0.3 + row * 0.3) * 0.1;
-
-          // Scale animation
-          const scale = 0.9 + Math.sin(time * 1.5 + normalizedDistance * 4) * 0.15;
-
-          drawMonogram(x, y, scale, opacity, rotation);
+        if (y > canvas.height && Math.random() > 0.98) {
+          binaryDrops[i] = 0;
         }
+        binaryDrops[i]++;
       }
 
-      // Add moving highlight effect
-      const highlightGradient = ctx.createRadialGradient(
-        canvas.width / 2 + Math.cos(time * 0.8) * canvas.width * 0.4,
-        canvas.height / 2 + Math.sin(time * 0.8) * canvas.height * 0.4,
-        0,
-        canvas.width / 2 + Math.cos(time * 0.8) * canvas.width * 0.4,
-        canvas.height / 2 + Math.sin(time * 0.8) * canvas.height * 0.4,
-        canvas.width * 0.4
-      );
-      highlightGradient.addColorStop(0, 'rgba(6, 182, 212, 0.05)');
-      highlightGradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+      // Glitch effect
+      glitchTime++;
+      if (glitchTime > nextGlitch) {
+        const glitchHeight = 3;
+        const glitchY = Math.random() * canvas.height;
+        
+        // RGB split glitch
+        const imageData = ctx.getImageData(0, glitchY, canvas.width, glitchHeight);
+        ctx.putImageData(imageData, Math.random() * 10 - 5, glitchY);
+        
+        glitchTime = 0;
+        nextGlitch = Math.random() * 200 + 100;
+      }
+
+      // Draw main matrix rain
+      ctx.font = `bold ${fontSize}px monospace`;
       
-      ctx.fillStyle = highlightGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < drops.length; i++) {
+        // Random character
+        const text = matrix[Math.floor(Math.random() * matrix.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        // Create gradient for each character (bright green to dark)
+        const gradient = ctx.createLinearGradient(x, y - fontSize * 10, x, y);
+        gradient.addColorStop(0, 'rgba(0, 255, 0, 0)');
+        gradient.addColorStop(0.7, 'rgba(0, 255, 0, 0.8)');
+        gradient.addColorStop(0.85, 'rgba(0, 255, 100, 1)');
+        gradient.addColorStop(1, 'rgba(200, 255, 200, 1)'); // Bright head
+        
+        ctx.fillStyle = gradient;
+
+        // Draw shadow for glow effect
+        ctx.shadowColor = '#00ff00';
+        ctx.shadowBlur = 8;
+        ctx.fillText(text, x, y);
+        ctx.shadowBlur = 0;
+
+        // Add extra bright leading character
+        if (Math.random() > 0.98) {
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowBlur = 15;
+          ctx.fillText(text, x, y);
+          ctx.shadowBlur = 0;
+        }
+
+        // Reset drop to top randomly
+        if (y > canvas.height && Math.random() > 0.95) {
+          drops[i] = 0;
+        }
+
+        drops[i]++;
+      }
+
+      // Add random highlights
+      if (Math.random() > 0.97) {
+        const highlightX = Math.random() * canvas.width;
+        const highlightY = Math.random() * canvas.height;
+        ctx.fillStyle = 'rgba(0, 255, 100, 0.3)';
+        ctx.fillRect(highlightX, highlightY, 2, 2);
+      }
+
+      // Add hacker text overlay (subtle)
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
+      ctx.font = 'bold 12px monospace';
+      const hackerText = '> SUPER_NOVA_AUTH_SYSTEM';
+      ctx.fillText(hackerText, 20, 30);
+
+      // Add corner code snippets
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+      ctx.font = '10px monospace';
+      const codeSnippets = [
+        '$ auth --validate',
+        '> License: OK',
+        'HWID: LOCKED',
+        'Status: ACTIVE'
+      ];
+      codeSnippets.forEach((line, i) => {
+        ctx.fillText(line, canvas.width - 150, 20 + i * 15);
+      });
 
       animationId = requestAnimationFrame(animate);
     };
