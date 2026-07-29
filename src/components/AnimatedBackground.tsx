@@ -20,88 +20,136 @@ export default function AnimatedBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Wave class
-    class Wave {
-      amplitude: number;
-      frequency: number;
-      speed: number;
-      yOffset: number;
-      color: string;
-      thickness: number;
+    // Pattern configuration
+    const patternSpacing = 150;
+    const patternOffsetX = 75;
+    const patternOffsetY = 75;
 
-      constructor(amplitude: number, frequency: number, speed: number, yOffset: number, color: string, thickness: number) {
-        this.amplitude = amplitude;
-        this.frequency = frequency;
-        this.speed = speed;
-        this.yOffset = yOffset;
-        this.color = color;
-        this.thickness = thickness;
-      }
+    // Draw LV-style monogram pattern
+    const drawMonogram = (x: number, y: number, scale: number, opacity: number, rotation: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.globalAlpha = opacity;
 
-      draw(ctx: CanvasRenderingContext2D, time: number) {
+      // Draw "SN" letters (Super Nova) in LV style
+      ctx.strokeStyle = '#06b6d4'; // cyan
+      ctx.lineWidth = 2.5 * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Letter "S"
+      ctx.beginPath();
+      ctx.arc(-15 * scale, -5 * scale, 12 * scale, Math.PI * 0.7, Math.PI * 2.3, false);
+      ctx.arc(-15 * scale, 5 * scale, 12 * scale, Math.PI * 0.3, Math.PI * 1.7, true);
+      ctx.stroke();
+
+      // Letter "N"
+      ctx.beginPath();
+      ctx.moveTo(5 * scale, -15 * scale);
+      ctx.lineTo(5 * scale, 15 * scale);
+      ctx.moveTo(5 * scale, -15 * scale);
+      ctx.lineTo(20 * scale, 15 * scale);
+      ctx.moveTo(20 * scale, -15 * scale);
+      ctx.lineTo(20 * scale, 15 * scale);
+      ctx.stroke();
+
+      // Decorative circle around (like LV flower)
+      ctx.strokeStyle = '#3b82f6'; // blue
+      ctx.lineWidth = 2 * scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30 * scale, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Small decorative stars
+      const drawStar = (sx: number, sy: number, size: number) => {
+        ctx.fillStyle = '#8b5cf6'; // purple
         ctx.beginPath();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = this.thickness;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        const points: { x: number; y: number }[] = [];
-        
-        for (let x = 0; x <= canvas.width; x += 5) {
-          const y = 
-            canvas.height / 2 + 
-            this.yOffset +
-            Math.sin((x * this.frequency + time * this.speed) * 0.01) * this.amplitude +
-            Math.cos((x * this.frequency * 0.5 + time * this.speed * 1.2) * 0.01) * (this.amplitude * 0.5);
-          
-          points.push({ x, y });
+        for (let i = 0; i < 4; i++) {
+          const angle = (Math.PI / 2) * i;
+          const x1 = sx + Math.cos(angle) * size;
+          const y1 = sy + Math.sin(angle) * size;
+          ctx.lineTo(x1, y1);
+          const angle2 = (Math.PI / 2) * i + Math.PI / 4;
+          const x2 = sx + Math.cos(angle2) * size * 0.4;
+          const y2 = sy + Math.sin(angle2) * size * 0.4;
+          ctx.lineTo(x2, y2);
         }
+        ctx.closePath();
+        ctx.fill();
+      };
 
-        // Draw smooth curve through points
-        ctx.moveTo(points[0].x, points[0].y);
-        
-        for (let i = 1; i < points.length - 2; i++) {
-          const xc = (points[i].x + points[i + 1].x) / 2;
-          const yc = (points[i].y + points[i + 1].y) / 2;
-          ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
-        }
+      drawStar(-35 * scale, -35 * scale, 5 * scale);
+      drawStar(35 * scale, -35 * scale, 5 * scale);
+      drawStar(-35 * scale, 35 * scale, 5 * scale);
+      drawStar(35 * scale, 35 * scale, 5 * scale);
 
-        // Last segment
-        const lastIdx = points.length - 1;
-        ctx.quadraticCurveTo(
-          points[lastIdx - 1].x, 
-          points[lastIdx - 1].y, 
-          points[lastIdx].x, 
-          points[lastIdx].y
-        );
-        
-        ctx.stroke();
-      }
-    }
-
-    // Create waves with different properties
-    const waves = [
-      new Wave(80, 0.5, 2, -150, 'rgba(255, 255, 255, 0.9)', 35),      // White thick
-      new Wave(60, 0.7, -1.5, -50, 'rgba(200, 200, 200, 0.7)', 30),    // Light gray
-      new Wave(100, 0.4, 1.8, 50, 'rgba(120, 120, 120, 0.5)', 40),     // Medium gray
-      new Wave(70, 0.6, -2.2, 150, 'rgba(255, 255, 255, 0.3)', 25),    // White thin
-      new Wave(90, 0.55, 1.3, -100, 'rgba(160, 160, 160, 0.4)', 28),   // Gray
-      new Wave(85, 0.45, -1.7, 100, 'rgba(80, 80, 80, 0.6)', 32),      // Dark gray
-      new Wave(75, 0.65, 2.5, 0, 'rgba(255, 255, 255, 0.15)', 20),     // White subtle
-    ];
+      ctx.restore();
+    };
 
     // Animation loop
     const animate = () => {
-      time += 1;
+      time += 0.02;
       
-      // Clear with black background
+      // Clear with dark background
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw all waves
-      waves.forEach(wave => {
-        wave.draw(ctx, time);
-      });
+      // Add subtle gradient overlay
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, 'rgba(3, 7, 18, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(15, 23, 42, 0.6)');
+      gradient.addColorStop(1, 'rgba(3, 7, 18, 0.8)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Calculate number of rows and columns
+      const cols = Math.ceil(canvas.width / patternSpacing) + 2;
+      const rows = Math.ceil(canvas.height / patternSpacing) + 2;
+
+      // Draw repeating pattern
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          // Offset alternating rows (diamond pattern like LV)
+          const offsetX = (row % 2) * patternOffsetX;
+          const x = col * patternSpacing + offsetX - patternSpacing;
+          const y = row * patternSpacing - patternSpacing;
+
+          // Animate opacity based on distance from a moving point
+          const centerX = canvas.width / 2 + Math.cos(time * 0.5) * canvas.width * 0.3;
+          const centerY = canvas.height / 2 + Math.sin(time * 0.7) * canvas.height * 0.3;
+          const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+          const maxDistance = Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2;
+          const normalizedDistance = distance / maxDistance;
+
+          // Pulsating opacity
+          const baseOpacity = 0.15 + Math.sin(time * 2 + normalizedDistance * 5) * 0.1;
+          const opacity = Math.max(0.05, Math.min(0.3, baseOpacity));
+
+          // Gentle rotation animation
+          const rotation = Math.sin(time + col * 0.3 + row * 0.3) * 0.1;
+
+          // Scale animation
+          const scale = 0.9 + Math.sin(time * 1.5 + normalizedDistance * 4) * 0.15;
+
+          drawMonogram(x, y, scale, opacity, rotation);
+        }
+      }
+
+      // Add moving highlight effect
+      const highlightGradient = ctx.createRadialGradient(
+        canvas.width / 2 + Math.cos(time * 0.8) * canvas.width * 0.4,
+        canvas.height / 2 + Math.sin(time * 0.8) * canvas.height * 0.4,
+        0,
+        canvas.width / 2 + Math.cos(time * 0.8) * canvas.width * 0.4,
+        canvas.height / 2 + Math.sin(time * 0.8) * canvas.height * 0.4,
+        canvas.width * 0.4
+      );
+      highlightGradient.addColorStop(0, 'rgba(6, 182, 212, 0.05)');
+      highlightGradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+      
+      ctx.fillStyle = highlightGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       animationId = requestAnimationFrame(animate);
     };
