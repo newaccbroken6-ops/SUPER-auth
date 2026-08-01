@@ -11,9 +11,10 @@ import SettingsPage from './pages/SettingsPage';
 import UpdatesPage from './pages/UpdatesPage';
 import SystemPage from './pages/SystemPage';
 import MonitorPage from './pages/MonitorPage';
+import TerminalPage from './pages/TerminalPage';
 import { Loader2, Zap } from 'lucide-react';
 
-type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor';
+type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor' | 'terminal';
 
 function AppContent() {
   const { user, profile, loading } = useAuth();
@@ -48,6 +49,7 @@ function AppContent() {
       case 'users': return profile?.role === 'admin' ? <UsersPage /> : <DashboardPage />;
       case 'monitor': return profile?.role === 'admin' ? <MonitorPage /> : <DashboardPage />;
       case 'system': return profile?.role === 'admin' ? <SystemPage /> : <DashboardPage />;
+      case 'terminal': return profile?.role === 'admin' ? <TerminalPage /> : <DashboardPage />;
       case 'settings': return <SettingsPage />;
       default: return <DashboardPage />;
     }

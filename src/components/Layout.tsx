@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 
-type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor';
+type Page = 'dashboard' | 'applications' | 'licenses' | 'logs' | 'users' | 'settings' | 'updates' | 'system' | 'monitor' | 'terminal';
 
 interface NavItem {
   id: Page;
@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { id: 'users', label: 'Users', icon: Users, adminOnly: true },
   { id: 'monitor', label: 'Apps Monitor', icon: Monitor, adminOnly: true },
   { id: 'system', label: 'System Analytics', icon: Database, adminOnly: true },
+  { id: 'terminal', label: 'Terminal', icon: Shield, adminOnly: true },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
