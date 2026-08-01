@@ -93,10 +93,10 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       </nav>
 
       {/* User info */}
-      <div className={`px-3 py-4 border-t border-black space-y-2`}>
+      <div className={`px-3 py-4 border-t border-gray-800 space-y-2`}>
         {!collapsed && (
           <>
-            <div className="px-3 py-2 rounded-xl bg-black">
+            <div className="px-3 py-2 rounded-xl bg-gray-800/50">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
                   {profile?.role === 'admin' ? (
@@ -144,14 +144,14 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden">
-      {/* Animated background */}
+    <div className="flex h-screen bg-gray-950 overflow-hidden">
+      {/* Animated gradient background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <AnimatedBackground />
       </div>
 
       {/* Desktop sidebar */}
-      <aside className={`hidden lg:flex flex-col bg-black backdrop-blur border-r border-gray-900 transition-all duration-300 relative z-10 ${collapsed ? 'w-16' : 'w-64'}`}>
+      <aside className={`hidden lg:flex flex-col bg-gray-900/80 backdrop-blur border-r border-gray-800 transition-all duration-300 relative z-10 ${collapsed ? 'w-16' : 'w-64'}`}>
         <SidebarContent />
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -165,7 +165,7 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-black border-r border-black z-50">
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-gray-900 border-r border-gray-800 z-50">
             <SidebarContent />
           </aside>
         </div>
@@ -174,7 +174,7 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative z-10">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-black border-b border-black backdrop-blur flex-shrink-0">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-800 backdrop-blur flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
