@@ -125,6 +125,30 @@ export default function TerminalPage() {
         addLine('info', '  auto off   - Disable auto-ping');
         addLine('info', '  clear      - Clear terminal');
         addLine('info', '  status     - Show connection status');
+        addLine('info', '  dbinfo     - Show database location');
+        break;
+
+      case 'dbinfo':
+        addLine('info', '========================================');
+        addLine('info', '   DATABASE LOCATION INFO');
+        addLine('info', '========================================');
+        addLine('success', `URL: ${import.meta.env.VITE_SUPABASE_URL}`);
+        addLine('info', `Dashboard: https://supabase.com/dashboard/project/${import.meta.env.VITE_SUPABASE_URL.split('//')[1].split('.')[0]}`);
+        addLine('info', '');
+        addLine('info', '=== API ENDPOINTS ===');
+        addLine('success', `Validate: ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-license`);
+        addLine('success', `Reset HWID: ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-hwid`);
+        addLine('success', `Latest Version: ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/latest-version`);
+        addLine('success', `Admin Licenses: ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-licenses`);
+        addLine('info', '');
+        addLine('info', '=== DATABASE TABLES ===');
+        addLine('info', '• profiles');
+        addLine('info', '• applications');
+        addLine('info', '• licenses');
+        addLine('info', '• hwid_bindings');
+        addLine('info', '• activity_logs');
+        addLine('info', '• rate_limit_log');
+        addLine('info', '========================================');
         break;
 
       case 'ping db':
