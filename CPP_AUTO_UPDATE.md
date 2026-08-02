@@ -419,6 +419,11 @@ if (info.updateAvailable) {
   https://github.com/tuo-user/tuo-repo/releases/download/v1.0/loader.dll
   ```
 
+- **GitHub Raw** (per file singoli)
+  ```
+  https://github.com/wg27b8s8kn-spec/ZIT/raw/refs/heads/main/SKUZA.dll
+  ```
+
 - **Dropbox** (con link diretto)
   ```
   https://www.dropbox.com/s/ABC123/loader.dll?dl=1
