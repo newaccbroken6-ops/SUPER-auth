@@ -138,10 +138,20 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-800/20 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                        <span className="text-cyan-400 font-bold text-xs">
-                          {(u.username ?? u.email)[0].toUpperCase()}
-                        </span>
+                      <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                        {u.avatar_url ? (
+                          <img 
+                            src={u.avatar_url} 
+                            alt={u.username ?? u.email} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center">
+                            <span className="text-cyan-400 font-bold text-xs">
+                              {(u.username ?? u.email)[0].toUpperCase()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="text-white text-sm font-medium">{u.username ?? '—'}</p>
