@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Theme colors CSS variables */
+  :root[data-theme="cyan"] { --theme-primary: #06b6d4; }
+  :root[data-theme="blue"] { --theme-primary: #3b82f6; }
+  :root[data-theme="purple"] { --theme-primary: #a855f7; }
+  :root[data-theme="pink"] { --theme-primary: #ec4899; }
+  :root[data-theme="red"] { --theme-primary: #ef4444; }
+  :root[data-theme="orange"] { --theme-primary: #f97316; }
+  :root[data-theme="yellow"] { --theme-primary: #eab308; }
+  :root[data-theme="green"] { --theme-primary: #22c55e; }
+  :root[data-theme="emerald"] { --theme-primary: #10b981; }
+  :root[data-theme="teal"] { --theme-primary: #14b8a6; }
+  :root[data-theme="indigo"] { --theme-primary: #6366f1; }
+  :root[data-theme="violet"] { --theme-primary: #8b5cf6; }
+  :root[data-theme="rose"] { --theme-primary: #f43f5e; }
+  :root[data-theme="slate"] { --theme-primary: #64748b; }
+}
+
 @layer utilities {
   /* Smooth scrollbar */
   .scrollbar-thin::-webkit-scrollbar {

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme, themes, Theme } from '../contexts/ThemeContext';
 import { supabase } from '../lib/supabase';
-import { User, Key, Copy, Check, Loader2, Code, BookOpen, Camera, Upload as UploadIcon } from 'lucide-react';
+import { User, Key, Copy, Check, Loader2, Code, BookOpen, Camera, Upload as UploadIcon, Palette } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [username, setUsername] = useState(profile?.username ?? '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -257,6 +259,51 @@ else:
                 <UploadIcon className="w-4 h-4" />
                 {uploading ? 'Uploading...' : 'Choose Image'}
               </label>
+            </div>
+          </div>
+
+          {/* Theme Selector */}
+          <div className="border-t border-gray-800 pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 border border-purple-500/20 flex items-center justify-center">
+                <Palette className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold">Theme</h2>
+                <p className="text-gray-500 text-sm">Customize your dashboard colors</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+              {(Object.keys(themes) as Theme[]).map((themeKey) => {
+                const themeData = themes[themeKey];
+                const isActive = theme === themeKey;
+                return (
+                  <button
+                    key={themeKey}
+                    onClick={() => setTheme(themeKey)}
+                    className={`group relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                      isActive
+                        ? `${themeData.border} bg-${themeKey}-500/10`
+                        : 'border-gray-800 hover:border-gray-700'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${themeData.gradient} shadow-lg ${
+                      isActive ? themeData.glow : ''
+                    } transition-transform group-hover:scale-110`} />
+                    <span className={`text-xs font-medium ${
+                      isActive ? themeData.text : 'text-gray-400'
+                    }`}>
+                      {themeData.name}
+                    </span>
+                    {isActive && (
+                      <div className="absolute top-2 right-2">
+                        <Check className={`w-4 h-4 ${themeData.text}`} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
