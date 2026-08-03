@@ -3,7 +3,7 @@ import { supabase, Application } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Upload, Plus, X, Loader2, Check, Copy, Tag,
-  Zap, ArrowUpCircle, AlertTriangle, Clock, Download
+  Zap, ArrowUpCircle, AlertTriangle, Clock, Download, Github, Link as LinkIcon
 } from 'lucide-react';
 
 interface AppVersion {
@@ -175,6 +175,46 @@ const std::string CURRENT_VERSION = "V1.9";  // bump on every build
         </div>
       )}
 
+      {/* GitHub Info Card */}
+      {selectedApp && (
+        <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gray-800/80 border border-gray-700 flex items-center justify-center flex-shrink-0">
+              <Github className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-white font-semibold text-sm mb-1">Host DLL on GitHub</h3>
+              <p className="text-gray-400 text-sm mb-3">
+                Upload your DLL to a GitHub repository and use the raw URL for automatic updates
+              </p>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-mono flex-shrink-0">1.</span>
+                  <p className="text-gray-400">Push your DLL to GitHub: <code className="text-gray-300 bg-gray-800 px-1 py-0.5 rounded">git add file.dll && git push</code></p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-mono flex-shrink-0">2.</span>
+                  <p className="text-gray-400">Get raw URL: <code className="text-gray-300 bg-gray-800 px-1 py-0.5 rounded">https://github.com/USER/REPO/raw/refs/heads/main/file.dll</code></p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-mono flex-shrink-0">3.</span>
+                  <p className="text-gray-400">Paste URL below when creating a new release</p>
+                </div>
+              </div>
+              <a 
+                href="https://github.com/wg27b8s8kn-spec/ZIT/blob/main/SKUZA.dll" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-xs font-medium transition-colors border border-gray-700"
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                View Example on GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* API endpoint card */}
       {endpointUrl && (
         <div className="bg-gray-900/60 border border-cyan-500/20 rounded-2xl p-5">
@@ -333,9 +373,23 @@ const std::string CURRENT_VERSION = "V1.9";  // bump on every build
                 type="url"
                 value={form.download_url}
                 onChange={e => setForm({ ...form, download_url: e.target.value })}
-                placeholder="https://your-server.com/update/v2.0.dll"
+                placeholder="https://github.com/user/repo/raw/refs/heads/main/file.dll"
                 className="w-full bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
+              <div className="mt-2 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <div className="flex items-start gap-2">
+                  <Github className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-cyan-400">
+                    <p className="font-semibold mb-1">GitHub Raw URL Format:</p>
+                    <code className="text-cyan-300">
+                      https://github.com/USER/REPO/raw/refs/heads/BRANCH/PATH/file.dll
+                    </code>
+                    <p className="mt-2 text-gray-400">
+                      Example: <code className="text-gray-300">https://github.com/wg27b8s8kn-spec/ZIT/raw/refs/heads/main/SKUZA.dll</code>
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div>
