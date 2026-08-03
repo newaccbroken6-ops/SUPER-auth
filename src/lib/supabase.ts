@@ -14,6 +14,7 @@ export interface Profile {
   role: UserRole;
   is_banned: boolean;
   ban_reason: string | null;
+  avatar_url: string | null;
   created_at: string;
 }
 

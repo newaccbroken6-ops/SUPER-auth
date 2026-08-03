@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { User, Key, Copy, Check, Loader2, Code, BookOpen } from 'lucide-react';
+import { User, Key, Copy, Check, Loader2, Code, BookOpen, Camera, Upload as UploadIcon } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -11,6 +11,8 @@ export default function SettingsPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [tab, setTab] = useState<'profile' | 'sdk'>('profile');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   async function saveProfile() {
     if (!username.trim()) return;
@@ -28,6 +30,88 @@ export default function SettingsPage() {
     await navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
+  }
+
+  async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      setUploading(true);
+      setUploadError('');
+
+      if (!event.target.files || event.target.files.length === 0) {
+        return;
+      }
+
+      const file = event.target.files[0];
+      const fileSize = file.size / 1024 / 1024; // MB
+
+      // Validate file size (max 2MB)
+      if (fileSize > 2) {
+        setUploadError('File size must be less than 2MB');
+        setUploading(false);
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setUploadError('File must be an image');
+        setUploading(false);
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user!.id}/${Date.now()}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile with avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user!.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      refreshProfile();
+    } catch (error: any) {
+      setUploadError(error.message || 'Error uploading avatar');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function removeAvatar() {
+    try {
+      setUploading(true);
+      setUploadError('');
+
+      // Update profile to remove avatar URL
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user!.id);
+
+      if (error) throw error;
+
+      refreshProfile();
+    } catch (error: any) {
+      setUploadError(error.message || 'Error removing avatar');
+    } finally {
+      setUploading(false);
+    }
   }
 
   const sdkCode = `// SUPER NOVA KEYS — Client SDK
@@ -111,15 +195,81 @@ else:
 
       {tab === 'profile' && (
         <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center">
-              <User className="w-6 h-6 text-cyan-400" />
+          {/* Avatar Upload Section */}
+          <div className="flex items-start gap-6">
+            <div className="relative group">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-2xl object-cover border-2 border-gray-700 group-hover:border-cyan-500 transition-colors"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border-2 border-gray-700 group-hover:border-cyan-500 flex items-center justify-center transition-colors">
+                  <User className="w-12 h-12 text-cyan-400" />
+                </div>
+              )}
+              
+              {/* Upload overlay */}
+              <label className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadAvatar}
+                  disabled={uploading}
+                  className="hidden"
+                />
+                {uploading ? (
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6 text-white" />
+                )}
+              </label>
             </div>
-            <div>
-              <h2 className="text-white font-semibold">Profile</h2>
-              <p className="text-gray-500 text-sm">{user?.email}</p>
+            
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-white font-semibold">Profile Picture</h3>
+                {profile?.avatar_url && (
+                  <button
+                    onClick={removeAvatar}
+                    disabled={uploading}
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-gray-400 text-sm mb-2">
+                Upload a profile picture. Max 2MB. JPG, PNG or GIF.
+              </p>
+              {uploadError && (
+                <p className="text-red-400 text-sm mt-2">{uploadError}</p>
+              )}
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 text-sm font-medium cursor-pointer transition-colors mt-3 border border-gray-700">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={uploadAvatar}
+                  disabled={uploading}
+                  className="hidden"
+                />
+                <UploadIcon className="w-4 h-4" />
+                {uploading ? 'Uploading...' : 'Choose Image'}
+              </label>
             </div>
           </div>
+
+          <div className="border-t border-gray-800 pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center">
+                <User className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold">Account Info</h2>
+                <p className="text-gray-500 text-sm">{user?.email}</p>
+              </div>
+            </div>
 
           <div>
             <label className="block text-sm text-gray-400 mb-1.5">Username</label>
@@ -129,6 +279,7 @@ else:
               onChange={e => setUsername(e.target.value)}
               className="w-full bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
             />
+          </div>
           </div>
 
           <div className="space-y-2">

@@ -98,8 +98,14 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
           <>
             <div className="px-3 py-2 rounded-xl bg-gray-800/50">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                  {profile?.role === 'admin' ? (
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/30 to-blue-600/30 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : profile?.role === 'admin' ? (
                     <Shield className="w-4 h-4 text-cyan-400" />
                   ) : (
                     <span className="text-cyan-400 font-bold text-sm">
@@ -193,8 +199,18 @@ export default function Layout({ page, setPage, children }: LayoutProps) {
             </div>
           </div>
           <div className="text-gray-600 text-xs font-mono flex items-center gap-1.5">
-            <Code className="w-3 h-3 text-cyan-400" />
-            <span className="text-cyan-400 font-semibold">LinuxKING</span>
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Avatar" 
+                className="w-6 h-6 rounded-full object-cover border border-cyan-500/30"
+              />
+            ) : (
+              <>
+                <Code className="w-3 h-3 text-cyan-400" />
+                <span className="text-cyan-400 font-semibold">LinuxKING</span>
+              </>
+            )}
           </div>
         </header>
 
